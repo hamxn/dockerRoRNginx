@@ -13,7 +13,7 @@ services:
     volumes:
       - db_local_data:/var/lib/mysql
 
-  lmp_user:
+  webserver:
     build: ./App
     volumes:
       - .:/var/www/current
