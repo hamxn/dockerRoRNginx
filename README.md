@@ -1,6 +1,37 @@
-# LMP ONE
+### PREREQUISITE
+Install docker to your local pc via the instruction in [Docker](https://docs.docker.com/install/) As the image is based on AmazonLinux, the local pc should be Unix-like operation system.
 
-下記は本システムで使用している主なソフトウェア及びバージョンとなります。
+### SETUP ENVIRONMENT
+
+#### Step 1: Install docker Community Edition (CE) for developers and small teams looking to get started with Docker and experimenting with container-based apps
+Manual:  [Install](https://docs.docker.com/install/) 
+By Command: 
+
+* MacOS
+  Install the latest version of Docker CE
+  
+  `$ brew install docker`
+  
+  Verify that Docker CE is installed correctly by running the hello-world image
+  
+  `$ sudo docker run hello-world` 
+
+* Ubuntu
+   Update the apt package index:
+   
+   `$ sudo apt-get update`
+   
+   Install the latest version of Docker CE, or go to the next step to install a specific version. Any existing installation of Docker is replaced
+   
+   `$ sudo apt-get install docker-ce`
+   
+   Verify that Docker CE is installed correctly by running the hello-world image
+   
+   `$ sudo docker run hello-world`   
+
+#### Step 2: Build image by command
+There are 2 images will be built: a app image and mysql database image
+The app image will content the following applications:
 
 * Ruby 2.5.0
 * Rails 5.2.0
@@ -11,103 +42,57 @@
 * Node.js 6.14.3
 * Unicorn 5.4.0
 
-## MySQL
+Copy the files of docker to source code
 ```
-brew install mysql
-bundle config --local build.mysql2 "--with-ldflags=-L/usr/local/opt/openssl/lib --with-cppflags=-I/usr/local/opt/openssl/include"
+$ cp -r dockerRoRNginx/* ~/ruby_source
+$ cd ~/ruby_source
 ```
+Build image and launch container
+```
+$ docker-compose build
+$ docker-compose up -d
+```
+It will take time for the first time. Coffee break.
+After finish, the result would be:
+```
+$ docker-compose ps
+     Name                   Command               State                      Ports
+-----------------------------------------------------------------------------------------------------
+dbserver_1   docker-entrypoint.sh mysqld      Up      0.0.0.0:3306->3306/tcp, 33060/tcp
+app_user_1   /bin/sh -c /etc/init.d/ngi ...   Up      0.0.0.0:8443->443/tcp, 0.0.0.0:8080->80/tcp
+```
+Login to container by command
 
-## Redis
-```
-brew install redis
-redis-server /usr/local/etc/redis.conf
-```
+`$ docker exec -ti -u ec2-user app_user_1 bash`
 
-* Configuration
-
-* Database creation
-
-データーベースの設定はRailsの標準 `conf/database.yml` に集約されています。接続ユーザやパスワードを変更したい場合はこちらのファイルの設定を変更してください。
-
+#### Step 3: Setup environment in source code 
+* Modify Database connection in the following files (change from localhost to dbserver)
 ```
-bin/rake db:setup
+$ vi ./config/database.yml
+$ vi ./lib/tasks/ridgepole.rake
 ```
-
-* Database initialization
-
-## Active job 設定
-redisを動かした状況で下記のコマンドを実行
+* Install ruby bundle
 ```
-bundle exec sidekiq -q default -q cron -q mailers
+$ sudo su -
+$ bundle install
 ```
-
-各キューの役割について
-- `-q default`: `uploader` などの非同期で行いたいジョブが実行されます
-- `-q mailers`: 非同期のメール送信が実行されます
-- `-q cron`: `cron` として実行したいジョブが設定されます
-
-## DDL 実行
+* Config database with bunlde
 ```
-bin/rake ridgepole:apply
+$ bundle config --local build.mysql2 "--with-ldflags=-L/usr/local/opt/openssl/lib --with-cppflags=-I/usr/local/opt/openssl/include"
 ```
-
-## SQL表示
+* Database creation and config
 ```
-bin/rake ridgepole:apply_dry_run
+$ bin/rake db:setup
+$ bin/rake ridgepole:apply
+$ bin/rake db:seed_fu
 ```
-
-## DB 定義を schemafile に出力
+* Set pre-commit with Rubocop
 ```
-bin/rake ridgepole:export
+$ bundle exec pre-commit enable git checks rubocop
+$ pre-commit install
 ```
-
-## 動作検証用データ作成
+* Start Unicorn service
 ```
-bin/rake db:seed_fu
-```
-
-* How to run rails server
-
-- 下記を実行
-```
-bundle install
-bin/rails s
+bundle exec unicorn -E development -c config/unicorn/development.rb
 ```
 
-* How to run the test suite
-
-```
-bin/rspec spec/
-```
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-- Deploy by CircleCI automatically
-
-* Others
-
-## Tips
-
-- gem など使うときに migration ファイルが生成された場合
-
-```
-# まず migration 適用
-bin/rails db:migrate
-
-# ridgepole の schema ファイルに export
-bin/rake ridgepole:export
-
-# migration ファイル消す
-rm db/migrate/* db/schema.rb
-```
-
-- pre-commit で rubocop 実行するようにする
-
-```
-bundle exec pre-commit enable git checks rubocop
-```
-
-## システム構成
-
-システム構成については[こちら](./readme/infra.md "システム構成")を参照してください。
