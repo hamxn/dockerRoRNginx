@@ -59,11 +59,11 @@ $ docker-compose ps
      Name                   Command               State                      Ports
 -----------------------------------------------------------------------------------------------------
 dbserver_1   docker-entrypoint.sh mysqld      Up      0.0.0.0:3306->3306/tcp, 33060/tcp
-app_user_1   /bin/sh -c /etc/init.d/ngi ...   Up      0.0.0.0:8443->443/tcp, 0.0.0.0:8080->80/tcp
+webserver_1   /bin/sh -c /etc/init.d/ngi ...   Up      0.0.0.0:8443->443/tcp, 0.0.0.0:8080->80/tcp
 ```
 Login to container by command
 
-`$ docker exec -ti -u ec2-user app_user_1 bash`
+`$ docker exec -ti -u ec2-user webserver_1 bash`
 
 #### Step 3: Setup environment in source code 
 * Modify Database connection in the following files (change from localhost to dbserver)
