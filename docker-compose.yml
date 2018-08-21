@@ -14,7 +14,7 @@ services:
       - db_local_data:/var/lib/mysql
 
   lmp_user:
-    build: ./LMP
+    build: ./App
     volumes:
       - .:/var/www/current
     ports:
