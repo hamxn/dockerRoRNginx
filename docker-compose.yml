@@ -1,0 +1,29 @@
+version: '3'
+services:
+  dbserver:
+    image: mysql:5.7
+    ports:
+      - 3306:3306
+    hostname: dbserver
+    environment:
+      MYSQL_DATABASE: lmp
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: lftv
+      MYSQL_PASSWORD: password
+    volumes:
+      - db_local_data:/var/lib/mysql
+
+  lmp_user:
+    build: ./LMP
+    volumes:
+      - .:/var/www/current
+    ports:
+      - 8080:80
+      - 8443:443
+    depends_on:
+      - dbserver
+
+volumes:
+  db_local_data:
+    driver: local
+
